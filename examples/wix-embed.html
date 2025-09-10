@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PYRA Barter Credit - Wix Integration Example</title>
+    <style>
+        .pyra-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 400px;
+            margin: 20px auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .pyra-title {
+            margin: 0 0 15px 0;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .pyra-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .pyra-info {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin: 10px 0;
+        }
+        
+        .pyra-stats {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 15px 0;
+            backdrop-filter: blur(5px);
+        }
+        
+        .pyra-refresh {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .pyra-refresh:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+        
+        .pyra-loading {
+            color: #FFD700;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .pyra-error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    COPY THIS SECTION INTO WIX HTML COMPONENT:
+    ========================================== 
+    -->
+    
+    <div class="pyra-container">
+        <h2 class="pyra-title">🏛️ PYRA's Barter Credit</h2>
+        <div class="pyra-value" id="pyra-credit-value">Loading...</div>
+        <div class="pyra-info" id="pyra-timestamp">Fetching latest data...</div>
+        
+        <div class="pyra-stats" id="pyra-stats" style="display: none;">
+            <div id="pyra-coin-count">📊 Coins analyzed: --</div>
+            <div id="pyra-valid-count">✅ Valid coins: --</div>
+        </div>
+        
+        <div id="pyra-error" class="pyra-error" style="display: none;"></div>
+        
+        <button class="pyra-refresh" onclick="updatePyraCredit()">🔄 Refresh</button>
+    </div>
+
+    <script>
+        // Configuration - REPLACE WITH YOUR ACTUAL API URL
+        const PYRA_API_URL = 'https://your-api-domain.com/api/barter-credit';
+        
+        // Global variables
+        let isLoading = false;
+        
+        /**
+         * Update PYRA credit display
+         */
+        async function updatePyraCredit() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            
+            // Show loading state
+            document.getElementById('pyra-credit-value').innerHTML = '<span class="pyra-loading">Loading...</span>';
+            document.getElementById('pyra-timestamp').textContent = 'Updating...';
+            document.getElementById('pyra-error').style.display = 'none';
+            document.getElementById('pyra-stats').style.display = 'none';
+            
+            try {
+                const response = await fetch(PYRA_API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    // Add timeout
+                    signal: AbortSignal.timeout(10000)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Update main display
+                    document.getElementById('pyra-credit-value').textContent = `$${data.value.toFixed(6)}`;
+                    
+                    // Update timestamp
+                    const updateTime = new Date(data.timestamp);
+                    document.getElementById('pyra-timestamp').textContent = 
+                        `Updated: ${updateTime.toLocaleDateString()} ${updateTime.toLocaleTimeString()}`;
+                    
+                    // Show statistics
+                    document.getElementById('pyra-coin-count').textContent = 
+                        `📊 Coins analyzed: ${data.total_coins_processed.toLocaleString()}`;
+                    document.getElementById('pyra-valid-count').textContent = 
+                        `✅ Valid coins: ${data.valid_coins_used.toLocaleString()}`;
+                    document.getElementById('pyra-stats').style.display = 'block';
+                    
+                    // Store in localStorage for offline viewing
+                    try {
+                        localStorage.setItem('pyra-credit-data', JSON.stringify(data));
+                    } catch (e) {
+                        // Ignore localStorage errors
+                    }
+                    
+                } else {
+                    throw new Error(data.error || 'Unknown error from API');
+                }
+                
+            } catch (error) {
+                console.error('PYRA Credit fetch error:', error);
+                
+                // Show error
+                document.getElementById('pyra-error').textContent = 
+                    `Error: ${error.message}`;
+                document.getElementById('pyra-error').style.display = 'block';
+                
+                // Try to load cached data
+                try {
+                    const cachedData = localStorage.getItem('pyra-credit-data');
+                    if (cachedData) {
+                        const data = JSON.parse(cachedData);
+                        document.getElementById('pyra-credit-value').textContent = 
+                            `$${data.value.toFixed(6)} (cached)`;
+                        document.getElementById('pyra-timestamp').textContent = 
+                            'Using cached data - please refresh';
+                    } else {
+                        document.getElementById('pyra-credit-value').textContent = 'Unavailable';
+                        document.getElementById('pyra-timestamp').textContent = 'Unable to fetch data';
+                    }
+                } catch (e) {
+                    document.getElementById('pyra-credit-value').textContent = 'Unavailable';
+                    document.getElementById('pyra-timestamp').textContent = 'Unable to fetch data';
+                }
+            } finally {
+                isLoading = false;
+            }
+        }
+        
+        /**
+         * Format number with commas
+         */
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        /**
+         * Initialize the widget
+         */
+        function initPyraWidget() {
+            // Initial load
+            updatePyraCredit();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(updatePyraCredit, 5 * 60 * 1000);
+            
+            // Refresh when page becomes visible (if user switches tabs)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    updatePyraCredit();
+                }
+            });
+        }
+        
+        // Start when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPyraWidget);
+        } else {
+            initPyraWidget();
+        }
+        
+        // Expose function globally for manual refresh
+        window.updatePyraCredit = updatePyraCredit;
+    </script>
+
+    <!-- 
+    END OF WIX COPY SECTION
+    ====================== 
+    -->
+
+    <!-- Instructions for Wix Users -->
+    <div style="max-width: 600px; margin: 40px auto; padding: 20px; background: #f9f9f9; border-radius: 10px; font-family: Arial, sans-serif;">
+        <h3>🎯 How to Use in Wix:</h3>
+        <ol>
+            <li><strong>Add HTML Component:</strong> In Wix editor, add an "HTML Component" or "Custom Code" element</li>
+            <li><strong>Copy Code:</strong> Copy everything between the "COPY THIS SECTION" comments above</li>
+            <li><strong>Paste:</strong> Paste the code into the HTML component</li>
+            <li><strong>Update API URL:</strong> Replace <code>https://your-api-domain.com</code> with your actual deployed API URL</li>
+            <li><strong>Customize:</strong> Modify colors, fonts, and styling to match your site</li>
+            <li><strong>Publish:</strong> Save and publish your Wix site</li>
+        </ol>
+        
+        <h3>🎨 Customization Tips:</h3>
+        <ul>
+            <li>Change the gradient colors in <code>background: linear-gradient(...)</code></li>
+            <li>Modify font sizes by changing <code>font-size</code> values</li>
+            <li>Adjust the refresh interval (currently 5 minutes)</li>
+            <li>Add your own logo or branding</li>
+        </ul>
+        
+        <h3>⚙️ Configuration:</h3>
+        <p>Make sure to update the <code>PYRA_API_URL</code> constant with your deployed API endpoint before using in production.</p>
+    </div>
+
+</body>
+</html>
