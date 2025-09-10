@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PYRA Barter Credit - Vanilla JavaScript Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .credit-display {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .credit-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .credit-info {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin: 10px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .converter {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .converter h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .converter-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .converter-controls input,
+        .converter-controls select,
+        .converter-controls button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .converter-controls input {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .converter-result {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #2e7d32;
+        }
+
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+
+        .button.success {
+            background: #4CAF50;
+        }
+
+        .button.success:hover {
+            background: #45a049;
+        }
+
+        .button.danger {
+            background: #e74c3c;
+        }
+
+        .button.danger:hover {
+            background: #c0392b;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f44336;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+            margin: 15px 0;
+        }
+
+        .log {
+            background: #263238;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .api-demo {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .api-endpoint {
+            background: #263238;
+            color: #4fc3f7;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .converter-controls {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ PYRA's Barter Credit</h1>
+            <p>Vanilla JavaScript Integration Examples</p>
+        </div>
+
+        <div class="grid">
+            <!-- Main Credit Display -->
+            <div class="card">
+                <h2>📊 Live Credit Display</h2>
+                <div class="credit-display">
+                    <div class="credit-value" id="mainCreditValue">Loading...</div>
+                    <div class="credit-info" id="mainCreditInfo">Fetching data...</div>
+                    
+                    <div class="stats-grid" id="mainStats" style="display: none;">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalCoins">--</div>
+                            <div class="stat-label">Total Coins</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="validCoins">--</div>
+                            <div class="stat-label">Valid Coins</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="button success" onclick="updateMainDisplay()">
+                    🔄 Refresh Credit
+                </button>
+            </div>
+
+            <!-- Currency Converter -->
+            <div class="card">
+                <h2>💱 PYRA Converter</h2>
+                <div class="converter">
+                    <h3>Convert Between USD and PYRA</h3>
+                    <div class="converter-controls">
+                        <input type="number" id="convertAmount" placeholder="Amount" value="100">
+                        <select id="convertDirection">
+                            <option value="usd-to-pyra">USD → PYRA</option>
+                            <option value="pyra-to-usd">PYRA → USD</option>
+                        </select>
+                        <button class="button" onclick="performConversion()">Convert</button>
+                    </div>
+                    <div class="converter-result" id="conversionResult">
+                        Enter an amount and click Convert
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Testing -->
+            <div class="card">
+                <h2>🔧 API Testing</h2>
+                <div class="api-demo">
+                    <h3>Test Different Endpoints</h3>
+                    <div class="api-endpoint">/api/barter-credit</div>
+                    <button class="button" onclick="testJsonApi()">Test JSON API</button>
+                    
+                    <div class="api-endpoint">/api/barter-credit/html</div>
+                    <button class="button" onclick="testHtmlApi()">Test HTML API</button>
+                    
+                    <div class="api-endpoint">/health</div>
+                    <button class="button" onclick="testHealthCheck()">Health Check</button>
+                </div>
+                <div id="apiResults"></div>
+            </div>
+
+            <!-- Console Log -->
+            <div class="card">
+                <h2>📋 Console Log</h2>
+                <button class="button danger" onclick="clearLog()">Clear Log</button>
+                <div class="log" id="consoleLog">Application started...\n</div>
+            </div>
+        </div>
+
+        <!-- Integration Examples -->
+        <div class="card">
+            <h2>🔗 Integration Code Examples</h2>
+            <div class="api-demo">
+                <h3>Basic Fetch Example</h3>
+                <div class="api-endpoint">
+fetch('/api/barter-credit')
+    .then(response => response.json())
+    .then(data => {
+        console.log('PYRA Credit:', data.value);
+        document.getElementById('display').textContent = `$${data.value.toFixed(6)}`;
+    });
+                </div>
+                
+                <h3>Auto-updating Widget</h3>
+                <div class="api-endpoint">
+setInterval(async () => {
+    try {
+        const response = await fetch('/api/barter-credit');
+        const data = await response.json();
+        updateDisplay(data);
+    } catch (error) {
+        console.error('Update failed:', error);
+    }
+}, 300000); // Update every 5 minutes
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'https://your-api-domain.com'; // Replace with your actual API URL
+        let currentCredit = null;
+        
+        // Utility functions
+        function log(message) {
+            const logElement = document.getElementById('consoleLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('consoleLog').textContent = 'Console cleared...\n';
+        }
+
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '<span class="loading"></span>Loading...';
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="error">❌ Error: ${message}</div>`;
+        }
+
+        function showSuccess(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="success">✅ ${message}</div>`;
+        }
+
+        // Main credit display functions
+        async function updateMainDisplay() {
+            try {
+                log('Updating main credit display...');
+                showLoading('mainCreditValue');
+                document.getElementById('mainCreditInfo').textContent = 'Updating...';
+                document.getElementById('mainStats').style.display = 'none';
+
+                const response = await fetch(`${API_BASE}/api/barter-credit`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    currentCredit = data;
+                    
+                    // Update main display
+                    document.getElementById('mainCreditValue').textContent = `$${data.value.toFixed(6)}`;
+                    document.getElementById('mainCreditInfo').textContent = 
+                        `Updated: ${new Date(data.timestamp).toLocaleString()}`;
+                    
+                    // Update stats
+                    if (data.total_coins_processed && data.valid_coins_used) {
+                        document.getElementById('totalCoins').textContent = data.total_coins_processed.toLocaleString();
+                        document.getElementById('validCoins').textContent = data.valid_coins_used.toLocaleString();
+                        document.getElementById('mainStats').style.display = 'grid';
+                    }
+
+                    log(`Credit updated: $${data.value.toFixed(6)}`);
+                } else {
+                    throw new Error(data.error || 'API returned error status');
+                }
+
+            } catch (error) {
+                log(`Error updating credit: ${error.message}`);
+                document.getElementById('mainCreditValue').textContent = 'Error';
+                document.getElementById('mainCreditInfo').textContent = error.message;
+            }
+        }
+
+        // Converter functions
+        function performConversion() {
+            if (!currentCredit || !currentCredit.value) {
+                showError('conversionResult', 'No credit data available. Please refresh first.');
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('convertAmount').value);
+            const direction = document.getElementById('convertDirection').value;
+            
+            if (isNaN(amount) || amount <= 0) {
+                showError('conversionResult', 'Please enter a valid amount');
+                return;
+            }
+
+            let result, resultUnit;
+            
+            if (direction === 'usd-to-pyra') {
+                result = (amount / currentCredit.value).toFixed(6);
+                resultUnit = 'PYRA';
+            } else {
+                result = (amount * currentCredit.value).toFixed(2);
+                resultUnit = 'USD';
+            }
+
+            document.getElementById('conversionResult').innerHTML = 
+                `<strong>${amount} ${direction.split('-')[0].toUpperCase()} = ${result} ${resultUnit}</strong>`;
+            
+            log(`Conversion: ${amount} → ${result} ${resultUnit}`);
+        }
+
+        // API testing functions
+        async function testJsonApi() {
+            try {
+                log('Testing JSON API endpoint...');
+                showLoading('apiResults');
+                
+                const response = await fetch(`${API_BASE}/api/barter-credit`);
+                const data = await response.json();
+                
+                document.getElementById('apiResults').innerHTML = `
+                    <div class="success">JSON API Response:</div>
+                    <div class="log">${JSON.stringify(data, null, 2)}</div>
+                `;
+                
+                log('JSON API test successful');
+            } catch (error) {
+                log(`JSON API test failed: ${error.message}`);
+                showError('apiResults', `JSON API test failed: ${error.message}`);
+            }
+        }
+
+        async function testHtmlApi() {
+            try {
+                log('Testing HTML API endpoint...');
+                showLoading('apiResults');
+                
+                const response = await fetch(`${API_BASE}/api/barter-credit/html`);
+                const html = await response.text();
+                
+                document.getElementById('apiResults').innerHTML = `
+                    <div class="success">HTML API Response:</div>
+                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                        ${html}
+                    </div>
+                `;
+                
+                log('HTML API test successful');
+            } catch (error) {
+                log(`HTML API test failed: ${error.message}`);
+                showError('apiResults', `HTML API test failed: ${error.message}`);
+            }
+        }
+
+        async function testHealthCheck() {
+            try {
+                log('Testing health check endpoint...');
+                showLoading('apiResults');
+                
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('apiResults').innerHTML = `
+                    <div class="success">Health Check Response:</div>
+                    <div class="log">${JSON.stringify(data, null, 2)}</div>
+                `;
+                
+                log('Health check successful');
+            } catch (error) {
+                log(`Health check failed: ${error.message}`);
+                showError('apiResults', `Health check failed: ${error.message}`);
+            }
+        }
+
+        // Auto-update functionality
+        function startAutoUpdate() {
+            updateMainDisplay(); // Initial load
+            
+            // Update every 5 minutes
+            setInterval(updateMainDisplay, 5 * 60 * 1000);
+            
+            log('Auto-update started (5-minute interval)');
+        }
+
+        // Event listeners
+        document.getElementById('convertAmount').addEventListener('input', () => {
+            // Auto-convert on input change if we have credit data
+            if (currentCredit) {
+                performConversion();
+            }
+        });
+
+        document.getElementById('convertDirection').addEventListener('change', () => {
+            // Auto-convert on direction change
+            if (currentCredit) {
+                performConversion();
+            }
+        });
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Application initialized');
+            startAutoUpdate();
+        });
+
+        // Handle page visibility change (refresh when tab becomes active)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentCredit) {
+                const timeSinceUpdate = Date.now() - new Date(currentCredit.timestamp).getTime();
+                // Refresh if more than 2 minutes since last update
+                if (timeSinceUpdate > 2 * 60 * 1000) {
+                    log('Page became visible, refreshing data...');
+                    updateMainDisplay();
+                }
+            }
+        });
+
+        // Global functions for console testing
+        window.pyraCreditAPI = {
+            updateDisplay: updateMainDisplay,
+            convert: performConversion,
+            testJSON: testJsonApi,
+            testHTML: testHtmlApi,
+            testHealth: testHealthCheck,
+            getCurrentCredit: () => currentCredit,
+            clearLog: clearLog
+        };
+        
+        log('Global API functions available: window.pyraCreditAPI');
+    </script>
+</body>
+</html>
